@@ -1,0 +1,34 @@
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-cart text-primary"></i> Carts Management</h2>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped">
+          <thead class="table-dark">
+            <tr>
+              <th><i class="bi bi-person"></i> User</th>
+              <th><i class="bi bi-box-seam"></i> Product</th>
+              <th><i class="bi bi-123"></i> Quantity</th>
+              <th><i class="bi bi-gear"></i> Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let cart of carts">
+              <td>{{ cart.userId?.name }}</td>
+              <td>{{ cart.productId?.name }}</td>
+              <td><span class="badge bg-info">{{ cart.quantity }}</span></td>
+              <td>
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteCart(cart._id)">
+                  <i class="bi bi-trash"></i> Delete
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

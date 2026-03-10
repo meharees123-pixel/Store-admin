@@ -1,0 +1,112 @@
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-house text-primary"></i> User Addresses Management</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addressModal" (click)="openAddModal()">
+      <i class="bi bi-plus-circle"></i> Add Address
+    </button>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped">
+          <thead class="table-dark">
+            <tr>
+              <th><i class="bi bi-person"></i> User</th>
+              <th><i class="bi bi-geo-alt"></i> Street</th>
+              <th><i class="bi bi-building"></i> City</th>
+              <th><i class="bi bi-globe"></i> State</th>
+              <th><i class="bi bi-flag"></i> Country</th>
+              <th><i class="bi bi-geo-alt"></i> Delivery Location</th>
+              <th><i class="bi bi-check-circle"></i> Active</th>
+              <th><i class="bi bi-gear"></i> Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let address of addresses">
+              <td>{{ getUserName(address.userId) }}</td>
+              <td>{{ address.street }}</td>
+              <td>{{ address.city }}</td>
+              <td>{{ address.state }}</td>
+              <td>{{ address.country }}</td>
+              <td>{{ getDeliveryLocationName(address.deliveryLocationId) }}</td>
+              <td>
+                <span class="badge" [ngClass]="address.isActive ? 'bg-success' : 'bg-danger'">
+                  {{ address.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#addressModal" (click)="editAddress(address)">
+                  <i class="bi bi-pencil"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteAddress(address._id)">
+                  <i class="bi bi-trash"></i> Delete
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="addressModalLabel">
+            <i class="bi bi-house"></i> {{ isEditMode ? 'Edit Address' : 'Add Address' }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" (click)="closeModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="street" class="form-label"><i class="bi bi-geo-alt"></i> Street</label>
+                <input type="text" class="form-control" id="street" [(ngModel)]="selectedAddress.street" name="street" placeholder="Enter street address">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="city" class="form-label"><i class="bi bi-building"></i> City</label>
+                <input type="text" class="form-control" id="city" [(ngModel)]="selectedAddress.city" name="city" placeholder="Enter city">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="state" class="form-label"><i class="bi bi-globe"></i> State</label>
+                <input type="text" class="form-control" id="state" [(ngModel)]="selectedAddress.state" name="state" placeholder="Enter state">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="country" class="form-label"><i class="bi bi-flag"></i> Country</label>
+                <input type="text" class="form-control" id="country" [(ngModel)]="selectedAddress.country" name="country" placeholder="Enter country">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="deliveryLocationId" class="form-label"><i class="bi bi-geo-alt"></i> Delivery Location</label>
+                <select class="form-select" id="deliveryLocationId" [(ngModel)]="selectedAddress.deliveryLocationId" name="deliveryLocationId">
+                  <option *ngFor="let location of deliveryLocations" [value]="location._id">{{ location.name }}</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="userId" class="form-label"><i class="bi bi-person"></i> User</label>
+                <select class="form-select" id="userId" [(ngModel)]="selectedAddress.userId" name="userId">
+                  <option *ngFor="let user of users" [value]="user._id">{{ getUserLabel(user) }}</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="isActive" class="form-label"><i class="bi bi-check-circle"></i> Active</label>
+                <input type="checkbox" class="form-check-input" id="isActive" [(ngModel)]="selectedAddress.isActive" name="isActive">
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="closeModal()">
+            <i class="bi bi-x-circle"></i> Close
+          </button>
+          <button type="button" class="btn btn-primary" (click)="saveAddress()">
+            <i class="bi bi-check-circle"></i> {{ isEditMode ? 'Update' : 'Save' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

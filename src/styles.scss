@@ -1,0 +1,65 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+// App theme
+:root {
+  --app-bg: #f6f7fb;
+  --app-card-radius: 14px;
+  --app-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--app-bg);
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  text-decoration: none;
+}
+
+.card {
+  border: 0;
+  border-radius: var(--app-card-radius);
+  box-shadow: var(--app-shadow);
+}
+
+.table thead {
+  vertical-align: middle;
+}
+
+.table thead.table-dark th {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+.modal-content {
+  border: 0;
+  border-radius: 16px;
+  box-shadow: var(--app-shadow);
+}
+
+.form-control,
+.form-select {
+  border-radius: 12px;
+}
+
+.btn {
+  border-radius: 12px;
+}
+
+.badge {
+  border-radius: 999px;
+}

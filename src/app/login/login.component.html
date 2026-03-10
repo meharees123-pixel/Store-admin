@@ -1,0 +1,21 @@
+<div class="login-page">
+  <div class="card shadow-sm login-card">
+    <div class="card-body">
+      <h3 class="mb-3">Admin Login</h3>
+
+      <div *ngIf="errorMessage" class="alert alert-danger">
+        {{ errorMessage }}
+      </div>
+
+      <form (ngSubmit)="submit()">
+        <div class="mb-3">
+          <label class="form-label">Phone number</label>
+          <input class="form-control" [(ngModel)]="mobileNumber" name="mobileNumber" placeholder="+97412345678" />
+        </div>
+        <button class="btn btn-primary w-100" type="submit" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Signing in…' : 'Sign in' }}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

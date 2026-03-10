@@ -1,0 +1,145 @@
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people text-primary"></i> Users Management</h2>
+    <button
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#userModal"
+      (click)="openAddModal()"
+    >
+      <i class="bi bi-plus-circle"></i> Add User
+    </button>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th><i class="bi bi-person"></i> Name</th>
+              <th><i class="bi bi-envelope"></i> Email</th>
+              <th><i class="bi bi-telephone"></i> Mobile</th>
+              <th><i class="bi bi-toggle-on"></i> Status</th>
+              <th><i class="bi bi-gear"></i> Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users">
+              <td>{{ user.name || '—' }}</td>
+              <td>{{ user.email || '—' }}</td>
+              <td>{{ user.mobileNumber }}</td>
+              <td>
+                <span class="badge" [class.bg-success]="user.isActive" [class.bg-secondary]="!user.isActive">
+                  {{ user.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>
+                <button
+                  class="btn btn-sm btn-outline-warning me-2"
+                  data-bs-toggle="modal"
+                  data-bs-target="#userModal"
+                  (click)="editUser(user)"
+                >
+                  <i class="bi bi-pencil"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteUser(user._id)">
+                  <i class="bi bi-trash"></i> Delete
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="users.length === 0">
+              <td colspan="5" class="text-center text-muted py-4">No users found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="userModalLabel">
+            <i class="bi bi-people"></i> {{ isEditMode ? 'Edit User' : 'Add User' }}
+          </h5>
+          <button
+            type="button"
+            class="btn-close btn-close-white"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+            (click)="closeModal()"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="name" class="form-label"><i class="bi bi-person"></i> Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="name"
+                  [(ngModel)]="selectedUser.name"
+                  name="name"
+                  placeholder="Enter full name"
+                />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="email" class="form-label"><i class="bi bi-envelope"></i> Email</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  id="email"
+                  [(ngModel)]="selectedUser.email"
+                  name="email"
+                  placeholder="Enter email"
+                />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="mobileNumber" class="form-label"><i class="bi bi-telephone"></i> Mobile Number *</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="mobileNumber"
+                  [(ngModel)]="selectedUser.mobileNumber"
+                  name="mobileNumber"
+                  placeholder="Enter mobile number"
+                  required
+                />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label"><i class="bi bi-toggle-on"></i> Status</label>
+                <div class="form-check form-switch">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="isActive"
+                    [(ngModel)]="selectedUser.isActive"
+                    name="isActive"
+                  />
+                  <label class="form-check-label" for="isActive">
+                    {{ selectedUser.isActive ? 'Active' : 'Inactive' }}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="closeModal()">
+            <i class="bi bi-x-circle"></i> Close
+          </button>
+          <button type="button" class="btn btn-primary" (click)="saveUser()">
+            <i class="bi bi-check-circle"></i> {{ isEditMode ? 'Update' : 'Save' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,105 @@
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-box-seam text-primary"></i> Products</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal" (click)="openAddModal()">
+      <i class="bi bi-plus-circle"></i> Add Product
+    </button>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th class="text-nowrap">Price</th>
+              <th class="text-nowrap">Image</th>
+              <th class="text-nowrap">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of products">
+              <td class="fw-semibold">{{ product.name }}</td>
+              <td class="text-muted">{{ product.description || '—' }}</td>
+              <td><span class="badge bg-success">${{ product.price }}</span></td>
+              <td>
+                <a *ngIf="product.productImage" [href]="product.productImage" target="_blank" rel="noopener">View</a>
+                <span *ngIf="!product.productImage">—</span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#productModal" (click)="editProduct(product)">
+                  <i class="bi bi-pencil"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteProduct(product._id)">
+                  <i class="bi bi-trash"></i> Delete
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="products.length === 0">
+              <td colspan="5" class="text-center text-muted py-4">No products found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" #productModal id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="productModalLabel">{{ isEditMode ? 'Edit Product' : 'Add Product' }}</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" (click)="closeModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" [(ngModel)]="selectedProduct.name" name="name" placeholder="Product name">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="categoryId" class="form-label">Category</label>
+                <select class="form-select" id="categoryId" [(ngModel)]="selectedProduct.categoryId" name="categoryId">
+                  <option value="">Select Category</option>
+                  <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.name }}</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="price" class="form-label">Price</label>
+                <input type="number" class="form-control" id="price" [(ngModel)]="selectedProduct.price" name="price" placeholder="0.00">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="quantity" class="form-label">Quantity</label>
+                <input type="number" class="form-control" id="quantity" [(ngModel)]="selectedProduct.quantity" name="quantity" placeholder="0">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea class="form-control" id="description" [(ngModel)]="selectedProduct.description" name="description" rows="3" placeholder="Optional"></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Product Image</label>
+              <input type="file" class="form-control" accept="image/*" (change)="onImageSelected($event)">
+              <div class="form-text" *ngIf="selectedProduct.productImage">
+                Current: <a [href]="selectedProduct.productImage" target="_blank" rel="noopener">View image</a>
+              </div>
+              <button *ngIf="isEditMode && selectedProduct.productImage" type="button" class="btn btn-sm btn-outline-danger mt-2" (click)="deleteSelectedProductImage()">
+                <i class="bi bi-trash"></i> Delete image
+              </button>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="closeModal()">Close</button>
+          <button type="button" class="btn btn-primary" (click)="saveProduct()">
+            <i class="bi bi-check-circle"></i> {{ isEditMode ? 'Update' : 'Save' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
