@@ -7,7 +7,8 @@ import { TOAST_ERROR_MESSAGE, TOAST_SUCCESS_MESSAGE } from './http-context.token
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://localhost:3000';
+  //private baseUrl = 'http://localhost:3000';
+  private baseUrl = 'http://34.56.150.67:3000';
 
   constructor(private http: HttpClient) {}
 
