@@ -1,0 +1,139 @@
+<section class="app-dashboard-panel">
+  <header class="panel-header">
+    <div>
+      <h2>Platform analytics</h2>
+      <p class="muted">Snapshot of stores, users, sales, and the leading performers.</p>
+    </div>
+    <div class="store-filter">
+      <label for="store-filter">Store</label>
+      <select
+        id="store-filter"
+        (change)="onStoreChange($any($event.target).value)"
+        [value]="selectedStoreId"
+        [disabled]="!stores"
+      >
+        <option value="">All stores</option>
+        <option *ngIf="!stores" disabled>Loading stores…</option>
+        <ng-container *ngIf="stores">
+          <option *ngFor="let store of stores" [value]="store._id">
+            {{ store.name || store._id }}
+          </option>
+        </ng-container>
+      </select>
+    </div>
+  </header>
+
+  <div *ngIf="!report && !errorMessage" class="dashboard-loading">
+    <i class="bi bi-arrow-repeat spin"></i>
+    Loading dashboard metrics...
+  </div>
+
+  <div class="dashboard-overlay" *ngIf="isReportLoading">
+    <div class="overlay-card">
+      <i class="bi bi-arrow-repeat spin"></i>
+      Refreshing analytics...
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="dashboard-error">{{ errorMessage }}</div>
+
+  <div *ngIf="report" class="summary-grid">
+    <article class="stat-card">
+      <div class="stat-label">Stores</div>
+      <div class="stat-value">{{ report.totalStores }}</div>
+      <div class="stat-sub">Registered stores</div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-label">Users</div>
+      <div class="stat-value">{{ report.totalUsers }}</div>
+      <div class="stat-sub">Active users</div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-label">Orders</div>
+      <div class="stat-value">{{ report.totalOrders }}</div>
+      <div class="stat-sub">Processed orders</div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-label">Sales</div>
+      <div class="stat-value">
+        {{ report.totalSales | currency: 'USD': 'symbol': '1.0-0' }}
+      </div>
+      <div class="stat-sub">Gross revenue</div>
+    </article>
+  </div>
+
+  <div *ngIf="report" class="reports-grid">
+    <article class="report-card">
+      <header>
+        <div>
+          <strong>Top Stores</strong>
+          <p class="muted">By revenue (last {{ summaryMonths }} months)</p>
+        </div>
+      </header>
+      <ul class="report-list">
+        <li *ngFor="let store of report.topStores; let i = index">
+          <div class="report-ranking">{{ i + 1 }}</div>
+          <div class="report-detail">
+            <div class="report-title">{{ store.store?.name || 'Unknown store' }}</div>
+            <div class="report-meta">
+              {{ store.orderCount }} orders &middot;
+              {{ store.totalSales | currency: 'USD': 'symbol': '1.0-0' }}
+            </div>
+          </div>
+        </li>
+        <li *ngIf="!report.topStores.length" class="report-empty">No store sales yet</li>
+      </ul>
+    </article>
+
+    <article class="report-card">
+      <header>
+        <div>
+          <strong>Top Products</strong>
+          <p class="muted">Most selling items</p>
+        </div>
+      </header>
+      <ul class="report-list">
+        <li *ngFor="let product of report.topProducts; let i = index">
+          <div class="report-ranking">{{ i + 1 }}</div>
+          <div class="report-detail">
+            <div class="report-title">{{ product.product?.name || 'Unnamed product' }}</div>
+            <div class="report-meta">
+              {{ product.quantity }} sold &middot;
+              {{ product.totalSales | currency: 'USD': 'symbol': '1.0-0' }}
+            </div>
+          </div>
+        </li>
+        <li *ngIf="!report.topProducts.length" class="report-empty">No product sales yet</li>
+      </ul>
+    </article>
+
+    <article class="report-card report-card--full">
+      <header class="report-card-header">
+        <div>
+          <strong>Monthly Sales</strong>
+          <p class="muted">Last {{ summaryMonths }} months</p>
+        </div>
+      </header>
+      <div *ngIf="chartReady; else noSales" class="chart-wrapper">
+        <apx-chart
+          [series]="chartOptions.series"
+          [chart]="chartOptions.chart"
+          [xaxis]="chartOptions.xaxis"
+          [yaxis]="chartOptions.yaxis"
+          [plotOptions]="chartOptions.plotOptions"
+          [dataLabels]="chartOptions.dataLabels"
+          [fill]="chartOptions.fill"
+          [stroke]="chartOptions.stroke"
+          [colors]="chartOptions.colors"
+          [tooltip]="chartOptions.tooltip"
+          class="monthly-chart"
+        ></apx-chart>
+      </div>
+      <ng-template #noSales>
+        <div class="report-empty">
+          No sales data yet
+        </div>
+      </ng-template>
+    </article>
+  </div>
+</section>

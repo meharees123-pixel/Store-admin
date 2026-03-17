@@ -27,7 +27,9 @@
               <td>{{ category.categoryCode }}</td>
               <td>{{ getStoreName(category.storeId) }}</td>
               <td>
-                <a *ngIf="category.categoryImage" [href]="category.categoryImage" target="_blank" rel="noopener">View</a>
+                <a *ngIf="category.categoryImage" class="img-thumb-link" [href]="category.categoryImage" target="_blank" rel="noopener">
+                  <img class="img-thumb" [src]="category.categoryImage" alt="Category image" loading="lazy">
+                </a>
                 <span *ngIf="!category.categoryImage">—</span>
               </td>
               <td>
@@ -91,7 +93,9 @@
               <input type="file" class="form-control" accept="image/*" (change)="onImageSelected($event)">
               <div class="form-text" *ngIf="selectedCategory.categoryImage">
                 Current:
-                <a [href]="selectedCategory.categoryImage" target="_blank" rel="noopener">View image</a>
+                <a class="img-thumb-link ms-1" [href]="selectedCategory.categoryImage" target="_blank" rel="noopener">
+                  <img class="img-thumb" [src]="selectedCategory.categoryImage" alt="Category image" loading="lazy">
+                </a>
               </div>
               <button
                 *ngIf="isEditMode && selectedCategory.categoryImage"

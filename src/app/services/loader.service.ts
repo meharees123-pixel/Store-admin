@@ -13,4 +13,3 @@ export class LoaderService {
     this.activeRequests.update((n) => Math.max(0, n - 1));
   }
 }
-

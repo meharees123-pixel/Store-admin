@@ -7,7 +7,7 @@ import { AuthService } from '../services/auth.service';
   selector: 'app-dashboard',
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent {
   constructor(private auth: AuthService, private router: Router) {}

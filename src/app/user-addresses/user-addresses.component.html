@@ -17,7 +17,6 @@
               <th><i class="bi bi-building"></i> City</th>
               <th><i class="bi bi-globe"></i> State</th>
               <th><i class="bi bi-flag"></i> Country</th>
-              <th><i class="bi bi-geo-alt"></i> Delivery Location</th>
               <th><i class="bi bi-check-circle"></i> Active</th>
               <th><i class="bi bi-gear"></i> Actions</th>
             </tr>
@@ -29,7 +28,6 @@
               <td>{{ address.city }}</td>
               <td>{{ address.state }}</td>
               <td>{{ address.country }}</td>
-              <td>{{ getDeliveryLocationName(address.deliveryLocationId) }}</td>
               <td>
                 <span class="badge" [ngClass]="address.isActive ? 'bg-success' : 'bg-danger'">
                   {{ address.isActive ? 'Active' : 'Inactive' }}
@@ -78,12 +76,6 @@
               <div class="col-md-6 mb-3">
                 <label for="country" class="form-label"><i class="bi bi-flag"></i> Country</label>
                 <input type="text" class="form-control" id="country" [(ngModel)]="selectedAddress.country" name="country" placeholder="Enter country">
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="deliveryLocationId" class="form-label"><i class="bi bi-geo-alt"></i> Delivery Location</label>
-                <select class="form-select" id="deliveryLocationId" [(ngModel)]="selectedAddress.deliveryLocationId" name="deliveryLocationId">
-                  <option *ngFor="let location of deliveryLocations" [value]="location._id">{{ location.name }}</option>
-                </select>
               </div>
               <div class="col-md-6 mb-3">
                 <label for="userId" class="form-label"><i class="bi bi-person"></i> User</label>

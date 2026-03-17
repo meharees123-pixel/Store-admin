@@ -1,14 +1,16 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpContext } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { TOAST_ERROR_MESSAGE, TOAST_SUCCESS_MESSAGE } from './http-context.tokens';
+import { DashboardReport } from '../models/dashboard-report';
+import { SKIP_PAGE_LOADER } from './http-context.tokens';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  //private baseUrl = 'http://localhost:3000';
-  private baseUrl = 'http://34.56.150.67:3000';
+  private baseUrl = 'http://localhost:3000';
+ // private baseUrl = 'http://34.56.150.67:3000';
 
   constructor(private http: HttpClient) {}
 
@@ -44,6 +46,10 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/auth/firebase-login`, data, this.toast('Logged in successfully', 'Login failed'));
   }
 
+  loginInfo(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/firebase-login-info`, data, this.toast('Login info fetched', 'Login failed'));
+  }
+
   logout(data: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/auth/firebase-logout`, data, this.toast('Logged out successfully', 'Logout failed'));
   }
@@ -71,6 +77,10 @@ export class ApiService {
   // Categories
   getCategories(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/categories`);
+  }
+
+  getCategoriesByStore(storeId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/categories/store/${storeId}`);
   }
 
   createCategory(category: any): Observable<any> {
@@ -107,6 +117,10 @@ export class ApiService {
     return this.http.get<any[]>(`${this.baseUrl}/subcategories`);
   }
 
+  getSubcategoriesByStore(storeId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/subcategories/store/${storeId}`);
+  }
+
   createSubcategory(subcategory: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/subcategories`, subcategory, this.toast('Subcategory created successfully', 'Error creating subcategory'));
   }
@@ -119,9 +133,30 @@ export class ApiService {
     return this.http.delete(`${this.baseUrl}/subcategories/${id}`, this.toast('Subcategory deleted successfully', 'Error deleting subcategory'));
   }
 
+  uploadSubcategoryImage(id: string, file: File, replace = false): Observable<any> {
+    const form = new FormData();
+    form.append('image', file);
+    const method = replace ? 'PUT' : 'POST';
+    return this.http.request(method, `${this.baseUrl}/subcategories/${id}/image`, {
+      body: form,
+      ...this.toast('Subcategory image uploaded', 'Error uploading subcategory image'),
+    });
+  }
+
+  deleteSubcategoryImage(id: string): Observable<any> {
+    return this.http.delete(
+      `${this.baseUrl}/subcategories/${id}/image`,
+      this.toast('Subcategory image deleted', 'Error deleting subcategory image'),
+    );
+  }
+
   // Products
   getProducts(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/products`);
+  }
+
+  getProductsByStore(storeId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/products/store/${storeId}`);
   }
 
   getProduct(id: string): Observable<any> {
@@ -129,7 +164,7 @@ export class ApiService {
   }
 
   getProductsByCategory(categoryId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/products/${categoryId}`);
+    return this.http.get<any[]>(`${this.baseUrl}/products/by-parent/${categoryId}`);
   }
 
   createProduct(product: any): Observable<any> {
@@ -166,6 +201,10 @@ export class ApiService {
     return this.http.get<any[]>(`${this.baseUrl}/orders`);
   }
 
+  getOrdersByStore(storeId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/orders/store/${storeId}`);
+  }
+
   createOrder(order: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/orders`, order, this.toast('Order created successfully', 'Error creating order'));
   }
@@ -181,6 +220,10 @@ export class ApiService {
   // Carts
   getCarts(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/cart`);
+  }
+
+  getCartsByStore(storeId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/cart/store/${storeId}`);
   }
 
   createCart(cart: any): Observable<any> {
@@ -230,8 +273,10 @@ export class ApiService {
   }
 
   // App Settings
-  getAppSettings(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/app-settings`);
+  getAppSettings(storeId?: string): Observable<any[]> {
+    let params = new HttpParams();
+    if (storeId) params = params.set('storeId', storeId);
+    return this.http.get<any[]>(`${this.baseUrl}/app-settings`, { params });
   }
 
   createAppSetting(setting: any): Observable<any> {
@@ -244,5 +289,23 @@ export class ApiService {
 
   deleteAppSetting(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/app-settings/${id}`, this.toast('Setting deleted successfully', 'Error deleting setting'));
+  }
+
+  getDashboardReport(params?: { months?: number; limit?: number; storeId?: string }): Observable<DashboardReport> {
+    let httpParams = new HttpParams();
+    if (params?.months) {
+      httpParams = httpParams.set('months', String(params.months));
+    }
+    if (params?.limit) {
+      httpParams = httpParams.set('limit', String(params.limit));
+    }
+    if (params?.storeId) {
+      httpParams = httpParams.set('storeId', params.storeId);
+    }
+    const context = new HttpContext().set(SKIP_PAGE_LOADER, true);
+    return this.http.get<DashboardReport>(`${this.baseUrl}/reports/dashboard`, {
+      params: httpParams,
+      context,
+    });
   }
 }

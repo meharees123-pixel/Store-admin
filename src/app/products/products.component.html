@@ -1,9 +1,15 @@
 <div class="container-fluid">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0"><i class="bi bi-box-seam text-primary"></i> Products</h2>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal" (click)="openAddModal()">
-      <i class="bi bi-plus-circle"></i> Add Product
-    </button>
+    <div class="d-flex align-items-center gap-2 flex-nowrap">
+      <select class="form-select" style="max-width: 260px" [(ngModel)]="storeFilterId" (ngModelChange)="onStoreFilterChange($event)">
+        <option value="">All stores</option>
+        <option *ngFor="let s of stores" [value]="s._id">{{ s.name }}</option>
+      </select>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal" (click)="openAddModal()">
+        <i class="bi bi-plus-circle"></i> Add Product
+      </button>
+    </div>
   </div>
 
   <div class="card shadow-sm">
@@ -12,6 +18,7 @@
         <table class="table table-hover table-striped align-middle">
           <thead class="table-dark">
             <tr>
+              <th class="text-nowrap">Store</th>
               <th>Name</th>
               <th>Description</th>
               <th class="text-nowrap">Price</th>
@@ -21,11 +28,14 @@
           </thead>
           <tbody>
             <tr *ngFor="let product of products">
+              <td class="text-truncate" style="max-width: 220px">{{ storeName(product.storeId) }}</td>
               <td class="fw-semibold">{{ product.name }}</td>
               <td class="text-muted">{{ product.description || '—' }}</td>
               <td><span class="badge bg-success">${{ product.price }}</span></td>
               <td>
-                <a *ngIf="product.productImage" [href]="product.productImage" target="_blank" rel="noopener">View</a>
+                <a *ngIf="product.productImage" class="img-thumb-link" [href]="product.productImage" target="_blank" rel="noopener">
+                  <img class="img-thumb" [src]="product.productImage" alt="Product image" loading="lazy">
+                </a>
                 <span *ngIf="!product.productImage">—</span>
               </td>
               <td>
@@ -38,7 +48,7 @@
               </td>
             </tr>
             <tr *ngIf="products.length === 0">
-              <td colspan="5" class="text-center text-muted py-4">No products found</td>
+              <td colspan="6" class="text-center text-muted py-4">No products found</td>
             </tr>
           </tbody>
         </table>
@@ -62,10 +72,10 @@
                 <input type="text" class="form-control" id="name" [(ngModel)]="selectedProduct.name" name="name" placeholder="Product name">
               </div>
               <div class="col-md-6 mb-3">
-                <label for="categoryId" class="form-label">Category</label>
-                <select class="form-select" id="categoryId" [(ngModel)]="selectedProduct.categoryId" name="categoryId">
-                  <option value="">Select Category</option>
-                  <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.name }}</option>
+                <label for="storeId" class="form-label">Store</label>
+                <select class="form-select" id="storeId" [(ngModel)]="selectedProduct.storeId" name="storeId" (ngModelChange)="onModalStoreChange($event)">
+                  <option value="" disabled>Select store</option>
+                  <option *ngFor="let s of stores" [value]="s._id">{{ s.name }}</option>
                 </select>
               </div>
               <div class="col-md-6 mb-3">
@@ -76,6 +86,20 @@
                 <label for="quantity" class="form-label">Quantity</label>
                 <input type="number" class="form-control" id="quantity" [(ngModel)]="selectedProduct.quantity" name="quantity" placeholder="0">
               </div>
+              <div class="col-md-6 mb-3">
+                <label for="categoryId" class="form-label">Category</label>
+                <select class="form-select" id="categoryId" [(ngModel)]="selectedProduct.categoryId" name="categoryId" (ngModelChange)="onModalCategoryChange($event)" [disabled]="!selectedProduct.storeId">
+                  <option value="" disabled>Select category</option>
+                  <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.name }}</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="subcategoryId" class="form-label">Subcategory (optional)</label>
+                <select class="form-select" id="subcategoryId" [(ngModel)]="selectedProduct.subcategoryId" name="subcategoryId" [disabled]="!selectedProduct.storeId || !selectedProduct.categoryId">
+                  <option value="">(none)</option>
+                  <option *ngFor="let sub of visibleSubcategoriesForModal()" [value]="sub._id">{{ sub.name }}</option>
+                </select>
+              </div>
             </div>
             <div class="mb-3">
               <label for="description" class="form-label">Description</label>
@@ -85,7 +109,10 @@
               <label class="form-label">Product Image</label>
               <input type="file" class="form-control" accept="image/*" (change)="onImageSelected($event)">
               <div class="form-text" *ngIf="selectedProduct.productImage">
-                Current: <a [href]="selectedProduct.productImage" target="_blank" rel="noopener">View image</a>
+                Current:
+                <a class="img-thumb-link ms-1" [href]="selectedProduct.productImage" target="_blank" rel="noopener">
+                  <img class="img-thumb" [src]="selectedProduct.productImage" alt="Product image" loading="lazy">
+                </a>
               </div>
               <button *ngIf="isEditMode && selectedProduct.productImage" type="button" class="btn btn-sm btn-outline-danger mt-2" (click)="deleteSelectedProductImage()">
                 <i class="bi bi-trash"></i> Delete image

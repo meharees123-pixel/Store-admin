@@ -1,15 +1,17 @@
 <div class="app-shell">
-  <!-- Sidebar -->
   <aside class="app-sidebar">
-    <div class="app-brand">
-      <div class="brand-icon"><i class="bi bi-bag-check"></i></div>
-      <div class="brand-text">
-        <div class="brand-title">Store Admin</div>
-        <div class="brand-subtitle">Management</div>
+      <div class="app-brand">
+        <div class="brand-icon" aria-label="Store Admin logo"></div>
+        <div class="brand-text">
+          <div class="brand-title">Store Admin</div>
+          <div class="brand-subtitle">Management</div>
+        </div>
       </div>
-    </div>
 
-    <nav class="app-nav">
+      <nav class="app-nav">
+      <a [routerLink]="['/dashboard']" routerLinkActive="active" class="app-nav-link">
+        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+      </a>
       <a [routerLink]="['./products']" routerLinkActive="active" class="app-nav-link">
         <i class="bi bi-box-seam"></i><span>Products</span>
       </a>
@@ -43,10 +45,19 @@
     </nav>
   </aside>
 
-  <!-- Main Content -->
   <section class="app-main">
     <nav class="app-topbar">
-      <div class="topbar-title">Dashboard</div>
+      <div class="topbar-title">
+        <img
+          src="/logo.png"
+          alt="Admin"
+          width="26"
+          height="26"
+          style="vertical-align: middle; margin-right: 10px"
+          decoding="async"
+        />
+        Dashboard
+      </div>
       <div class="topbar-actions">
         <div class="text-muted small me-3" *ngIf="phone">
           <i class="bi bi-telephone me-1"></i>{{ phone }}

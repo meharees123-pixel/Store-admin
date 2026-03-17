@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { DashboardSummaryComponent } from './pages/dashboard-summary/dashboard-summary.component';
 import { ProductsComponent } from './products/products.component';
 import { StoresComponent } from './stores/stores.component';
 import { CategoriesComponent } from './categories/categories.component';
@@ -16,7 +17,7 @@ import { authGuard } from './services/auth.guard';
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'dashboard', component: DashboardComponent, children: [
-    { path: '', redirectTo: 'products', pathMatch: 'full' },
+    { path: '', component: DashboardSummaryComponent },
     { path: 'products', component: ProductsComponent },
     { path: 'stores', component: StoresComponent },
     { path: 'categories', component: CategoriesComponent },
@@ -30,6 +31,5 @@ export const routes: Routes = [
   ], canActivate: [authGuard] },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
 ];
-
 
 

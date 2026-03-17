@@ -6,6 +6,25 @@
     </button>
   </div>
 
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-6 col-lg-4">
+          <label class="form-label">Filter by Store (optional)</label>
+          <select class="form-select" [(ngModel)]="storeFilterId" name="storeFilterId">
+            <option value="">All stores + global</option>
+            <option *ngFor="let s of stores" [value]="s._id">{{ s.name }}</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-auto">
+          <button class="btn btn-outline-primary" (click)="loadSettings()">
+            <i class="bi bi-funnel"></i> Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="card shadow-sm">
     <div class="card-body">
       <div class="table-responsive">
@@ -13,6 +32,7 @@
           <thead class="table-dark">
             <tr>
               <th><i class="bi bi-key"></i> Key</th>
+              <th><i class="bi bi-shop"></i> Store</th>
               <th><i class="bi bi-tag"></i> Value</th>
               <th><i class="bi bi-file-text"></i> Description</th>
               <th><i class="bi bi-gear"></i> Actions</th>
@@ -21,6 +41,7 @@
           <tbody>
             <tr *ngFor="let setting of settings">
               <td>{{ setting.key }}</td>
+              <td>{{ storeName(setting.storeId) }}</td>
               <td>{{ setting.value }}</td>
               <td>{{ setting.description }}</td>
               <td>
@@ -39,7 +60,7 @@
   </div>
 
   <!-- Modal -->
-  <div class="modal fade" id="settingModal" tabindex="-1" aria-labelledby="settingModalLabel" aria-hidden="true">
+  <div class="modal fade" #settingModal id="settingModal" tabindex="-1" aria-labelledby="settingModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header bg-primary text-white">
@@ -51,6 +72,13 @@
         <div class="modal-body">
           <form>
             <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label"><i class="bi bi-shop"></i> Store (optional)</label>
+                <select class="form-select" [(ngModel)]="selectedSetting.storeId" name="storeId">
+                  <option value="">Global</option>
+                  <option *ngFor="let s of stores" [value]="s._id">{{ s.name }}</option>
+                </select>
+              </div>
               <div class="col-md-6 mb-3">
                 <label for="key" class="form-label"><i class="bi bi-key"></i> Key</label>
                 <input type="text" class="form-control" id="key" [(ngModel)]="selectedSetting.key" name="key" placeholder="Enter setting key">

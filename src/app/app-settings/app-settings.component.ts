@@ -12,6 +12,8 @@ import { ApiService } from '../services/api.service';
 })
 export class AppSettingsComponent implements OnInit {
   settings: any[] = [];
+  stores: any[] = [];
+  storeFilterId = '';
   selectedSetting: any = {};
   isEditMode = false;
   showToast = false;
@@ -32,11 +34,25 @@ export class AppSettingsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadStores();
     this.loadSettings();
   }
 
+  loadStores(): void {
+    this.apiService.getStores().subscribe({
+      next: (data) => {
+        this.stores = data || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.showToastMessage('Error loading stores', 'error');
+      },
+    });
+  }
+
   loadSettings(): void {
-    this.apiService.getAppSettings().subscribe({
+    const storeId = this.storeFilterId?.trim() || undefined;
+    this.apiService.getAppSettings(storeId).subscribe({
       next: (data) => {
         this.settings = data;
         this.cdr.markForCheck();
@@ -48,7 +64,7 @@ export class AppSettingsComponent implements OnInit {
   }
 
   openAddModal(): void {
-    this.selectedSetting = {};
+    this.selectedSetting = { storeId: this.storeFilterId?.trim() || '' };
     this.isEditMode = false;
   }
 
@@ -58,8 +74,14 @@ export class AppSettingsComponent implements OnInit {
   }
 
   saveSetting(): void {
+    const payload: any = {
+      ...this.selectedSetting,
+      storeId: this.selectedSetting?.storeId ? String(this.selectedSetting.storeId).trim() : undefined,
+    };
+    if (!payload.storeId) delete payload.storeId;
+
     if (this.isEditMode) {
-      this.apiService.updateAppSetting(this.selectedSetting._id, this.selectedSetting).subscribe({
+      this.apiService.updateAppSetting(this.selectedSetting._id, payload).subscribe({
         next: () => {
           this.loadSettings();
           this.ngZone.run(() => {
@@ -75,7 +97,7 @@ export class AppSettingsComponent implements OnInit {
         }
       });
     } else {
-      this.apiService.createAppSetting(this.selectedSetting).subscribe({
+      this.apiService.createAppSetting(payload).subscribe({
         next: () => {
           this.loadSettings();
           this.ngZone.run(() => {
@@ -111,6 +133,13 @@ export class AppSettingsComponent implements OnInit {
   closeModal(): void {
     this.selectedSetting = {};
     this.isEditMode = false;
-    // Optionally hide modal if needed
+    if (this.modal) {
+      (window as any).bootstrap?.Modal?.getInstance(this.modal.nativeElement)?.hide();
+    }
+  }
+
+  storeName(id?: string | null): string {
+    if (!id) return 'Global';
+    return this.stores.find((s) => s?._id === id)?.name || id;
   }
 }

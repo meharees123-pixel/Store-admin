@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../services/api.service';
 import { AuthService } from '../services/auth.service';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-login',
@@ -31,12 +32,18 @@ export class LoginComponent {
 
     this.isSubmitting = true;
     this.api
-      .login({ mobileNumber: this.mobileNumber.trim() })
+      .loginInfo({ mobileNumber: this.mobileNumber.trim() })
+      .pipe(
+        finalize(() => {
+          this.isSubmitting = false;
+        }),
+      )
       .subscribe({
         next: (user) => {
           const token = user?.firebaseToken;
           if (!token) {
-            this.errorMessage = 'Login succeeded but no token was returned.';
+            this.errorMessage =
+              'No token is stored for this user. Ask an admin to generate/assign a token, or use the write-login endpoint.';
             return;
           }
           this.auth.setPhone(this.mobileNumber.trim());
@@ -46,9 +53,6 @@ export class LoginComponent {
         error: (err) => {
           const msg = err?.error?.message;
           this.errorMessage = msg ? String(msg) : 'Login failed.';
-        },
-        complete: () => {
-          this.isSubmitting = false;
         },
       });
   }

@@ -1,33 +1,121 @@
 <div class="container-fluid">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-cart text-primary"></i> Carts Management</h2>
+    <h2 class="mb-0"><i class="bi bi-cart text-primary"></i> Carts Management</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cartModal" (click)="openAddModal()">
+      <i class="bi bi-plus-circle"></i> Add Cart Item
+    </button>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-6 col-lg-4">
+          <label class="form-label">Filter by Store</label>
+          <select class="form-select" [(ngModel)]="storeFilterId" name="storeFilterId">
+            <option value="">All stores</option>
+            <option *ngFor="let s of stores" [value]="s._id">{{ s.name }}</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-auto">
+          <button class="btn btn-outline-primary" (click)="loadCarts()">
+            <i class="bi bi-funnel"></i> Apply
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="card shadow-sm">
     <div class="card-body">
       <div class="table-responsive">
-        <table class="table table-hover table-striped">
+        <table class="table table-hover table-striped align-middle">
           <thead class="table-dark">
             <tr>
+              <th><i class="bi bi-shop"></i> Store</th>
               <th><i class="bi bi-person"></i> User</th>
               <th><i class="bi bi-box-seam"></i> Product</th>
-              <th><i class="bi bi-123"></i> Quantity</th>
+              <th class="text-nowrap"><i class="bi bi-123"></i> Qty</th>
+              <th class="text-nowrap"><i class="bi bi-cash"></i> Unit</th>
+              <th class="text-nowrap"><i class="bi bi-currency-dollar"></i> Total</th>
               <th><i class="bi bi-gear"></i> Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let cart of carts">
-              <td>{{ cart.userId?.name }}</td>
-              <td>{{ cart.productId?.name }}</td>
+              <td class="text-truncate" style="max-width: 220px">{{ storeName(cart.storeId) }}</td>
+              <td class="text-truncate" style="max-width: 220px">{{ userName(cart.userId) }}</td>
+              <td class="text-truncate" style="max-width: 260px">{{ productName(cart.productId) }}</td>
               <td><span class="badge bg-info">{{ cart.quantity }}</span></td>
+              <td><span class="badge bg-light text-dark">{{ cart.unitPrice ?? '—' }}</span></td>
+              <td><span class="badge bg-success">{{ cart.totalPrice ?? '—' }}</span></td>
               <td>
+                <button class="btn btn-sm btn-outline-warning me-2" data-bs-toggle="modal" data-bs-target="#cartModal" (click)="editCart(cart)">
+                  <i class="bi bi-pencil"></i> Edit
+                </button>
                 <button class="btn btn-sm btn-outline-danger" (click)="deleteCart(cart._id)">
                   <i class="bi bi-trash"></i> Delete
                 </button>
               </td>
             </tr>
+            <tr *ngIf="carts.length === 0">
+              <td colspan="7" class="text-center text-muted py-4">No cart items found</td>
+            </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="cartModalLabel">{{ isEditMode ? 'Edit Cart Item' : 'Add Cart Item' }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Store</label>
+              <select class="form-select" [(ngModel)]="selectedCart.storeId" name="storeId">
+                <option value="">Select store</option>
+                <option *ngFor="let s of stores" [value]="s._id">{{ s.name }}</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">User</label>
+              <select class="form-select" [(ngModel)]="selectedCart.userId" name="userId">
+                <option value="">Select user</option>
+                <option *ngFor="let u of users" [value]="u._id">{{ u.name || u.mobileNumber || u._id }}</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-8">
+              <label class="form-label">Product</label>
+              <select class="form-select" [(ngModel)]="selectedCart.productId" name="productId">
+                <option value="">Select product</option>
+                <option *ngFor="let p of products" [value]="p._id">{{ p.name }}</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Quantity</label>
+              <input type="number" class="form-control" [(ngModel)]="selectedCart.quantity" name="quantity" min="1" />
+            </div>
+            <div class="col-12">
+              <label class="form-label">Address ID (optional)</label>
+              <input type="text" class="form-control" [(ngModel)]="selectedCart.addressId" name="addressId" placeholder="MongoDB ObjectId" />
+              <div class="form-text">Leave empty if you don't want to set delivery address for this cart item.</div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="closeModal()">Close</button>
+        <button type="button" class="btn btn-primary" (click)="saveCart()">
+          <i class="bi bi-check-circle"></i> {{ isEditMode ? 'Update' : 'Save' }}
+        </button>
       </div>
     </div>
   </div>

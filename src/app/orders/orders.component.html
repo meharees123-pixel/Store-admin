@@ -1,32 +1,125 @@
 <div class="container-fluid">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-receipt text-primary"></i> Orders Management</h2>
+    <h2 class="mb-0"><i class="bi bi-receipt text-primary"></i> Orders Management</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#orderModal" (click)="openAddModal()">
+      <i class="bi bi-plus-circle"></i> Add Order
+    </button>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-6 col-lg-4">
+          <label class="form-label">Filter by Store</label>
+          <select class="form-select" [(ngModel)]="storeFilterId" name="storeFilterId">
+            <option value="">All stores</option>
+            <option *ngFor="let s of stores" [value]="s._id">{{ s.name }}</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-auto">
+          <button class="btn btn-outline-primary" (click)="loadOrders()">
+            <i class="bi bi-funnel"></i> Apply
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="card shadow-sm">
     <div class="card-body">
       <div class="table-responsive">
-        <table class="table table-hover table-striped">
+        <table class="table table-hover table-striped align-middle">
           <thead class="table-dark">
             <tr>
+              <th><i class="bi bi-shop"></i> Store</th>
               <th><i class="bi bi-person"></i> User</th>
+              <th><i class="bi bi-geo"></i> Address</th>
+              <th><i class="bi bi-geo-alt"></i> Delivery</th>
+              <th class="text-nowrap"><i class="bi bi-receipt"></i> Order</th>
               <th><i class="bi bi-flag"></i> Status</th>
               <th><i class="bi bi-cash"></i> Total</th>
+              <th class="text-nowrap"><i class="bi bi-list-check"></i> Items</th>
               <th><i class="bi bi-gear"></i> Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let order of orders">
-              <td>{{ order.userId?.name || order.userId }}</td>
+            <ng-container *ngFor="let order of orders">
+              <tr>
+              <td class="text-truncate" style="max-width: 220px">{{ storeName(order.storeId) }}</td>
+              <td class="text-truncate" style="max-width: 240px">{{ userLabel(order.userId) }}</td>
+              <td class="text-truncate" style="max-width: 260px">{{ addressLabel(order) }}</td>
+              <td class="text-truncate" style="max-width: 240px">{{ deliveryLocationLabel(order) }}</td>
+              <td class="text-nowrap">
+                <button type="button" class="btn btn-link p-0 fw-semibold text-decoration-none" (click)="toggleOrderDetails(order)">
+                  {{ orderLabel(order) }}
+                </button>
+              </td>
               <td>
                 <span class="badge" [ngClass]="getStatusBadgeClass(order.status)">{{ order.status }}</span>
               </td>
               <td><span class="badge bg-success">${{ order.totalAmount }}</span></td>
+              <td><span class="badge bg-light text-dark">{{ order.items?.length || 0 }}</span></td>
               <td>
                 <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#orderModal" (click)="editOrder(order)">
                   <i class="bi bi-pencil"></i> Edit
                 </button>
+                <button class="btn btn-sm btn-outline-danger ms-2" (click)="deleteOrder(order._id)">
+                  <i class="bi bi-trash"></i> Delete
+                </button>
               </td>
+              </tr>
+
+              <tr *ngIf="expandedOrderId === order._id">
+                <td colspan="9" class="bg-light">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="fw-semibold">
+                      <i class="bi bi-bag"></i>
+                      Products
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleOrderDetails(order)">
+                      <i class="bi bi-x-lg"></i> Close
+                    </button>
+                  </div>
+
+                  <div class="row g-2 small text-muted mb-2">
+                    <div class="col-12 col-md-4"><span class="fw-semibold text-dark">User:</span> {{ userLabel(order.userId) }}</div>
+                    <div class="col-12 col-md-4"><span class="fw-semibold text-dark">Address:</span> {{ addressLabel(order) }}</div>
+                    <div class="col-12 col-md-4"><span class="fw-semibold text-dark">Delivery:</span> {{ deliveryLocationLabel(order) }}</div>
+                  </div>
+
+                  <div class="table-responsive">
+                    <table class="table table-sm table-striped align-middle mb-0">
+                      <thead>
+                        <tr>
+                          <th>Product</th>
+                          <th class="text-nowrap">Image</th>
+                          <th class="text-nowrap">Qty</th>
+                          <th class="text-nowrap">Unit</th>
+                          <th class="text-nowrap">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let item of (order.items || [])">
+                          <td class="fw-semibold">{{ productNameForItem(item) }}</td>
+                          <td>
+                            <a *ngIf="productImageForItem(item)" [href]="productImageForItem(item)" target="_blank" rel="noopener">View</a>
+                            <span *ngIf="!productImageForItem(item)">—</span>
+                          </td>
+                          <td><span class="badge bg-info">{{ item?.quantity ?? '—' }}</span></td>
+                          <td><span class="badge bg-light text-dark">{{ itemUnitPrice(item) ?? '—' }}</span></td>
+                          <td><span class="badge bg-success">{{ itemTotalPrice(item) ?? '—' }}</span></td>
+                        </tr>
+                        <tr *ngIf="(order.items?.length || 0) === 0">
+                          <td colspan="5" class="text-center text-muted py-3">No items</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+            <tr *ngIf="orders.length === 0">
+              <td colspan="9" class="text-center text-muted py-4">No orders found</td>
             </tr>
           </tbody>
         </table>
@@ -35,35 +128,142 @@
   </div>
 
   <!-- Modal -->
-  <div class="modal fade" id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
+  <div class="modal fade" #orderModal id="orderModal" tabindex="-1" aria-labelledby="orderModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header bg-primary text-white">
           <h5 class="modal-title" id="orderModalLabel">
-            <i class="bi bi-receipt"></i> Edit Order
+            <i class="bi bi-receipt"></i> {{ isEditMode ? 'Edit Order' : 'Add Order' }}
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" (click)="closeModal()"></button>
         </div>
         <div class="modal-body">
           <form>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="user" class="form-label"><i class="bi bi-person"></i> User</label>
-                <input type="text" class="form-control" id="user" [value]="selectedOrder.userId?.name" readonly>
+            <div class="row g-3">
+              <div class="col-md-3" *ngIf="!isEditMode">
+                <label class="form-label"><i class="bi bi-shop"></i> Store</label>
+                <select class="form-select" [(ngModel)]="selectedOrder.storeId" name="storeId">
+                  <option value="">Select store</option>
+                  <option *ngFor="let s of stores" [value]="s._id">{{ s.name }}</option>
+                </select>
               </div>
-              <div class="col-md-6 mb-3">
-                <label for="totalAmount" class="form-label"><i class="bi bi-cash"></i> Total Amount</label>
-                <input type="number" class="form-control" id="totalAmount" [value]="selectedOrder.totalAmount" readonly>
+              <div class="col-md-3" *ngIf="!isEditMode">
+                <label class="form-label"><i class="bi bi-person"></i> User</label>
+                <select class="form-select" [(ngModel)]="selectedOrder.userId" name="userId">
+                  <option value="">Select user</option>
+                  <option *ngFor="let u of users" [value]="u._id">{{ u.name || u.mobileNumber || u._id }}</option>
+                </select>
+              </div>
+              <div class="col-md-3" *ngIf="!isEditMode">
+                <label class="form-label"><i class="bi bi-geo"></i> Address</label>
+                <select class="form-select" [(ngModel)]="selectedOrder.userAddressId" name="userAddressId">
+                  <option value="">Select address</option>
+                  <option *ngFor="let a of userAddresses" [value]="a._id">{{ formatAddress(a) || a._id }}</option>
+                </select>
+              </div>
+              <div class="col-md-3" *ngIf="!isEditMode">
+                <label class="form-label"><i class="bi bi-geo-alt"></i> Delivery Location</label>
+                <select class="form-select" [(ngModel)]="selectedOrder.deliveryLocationId" name="deliveryLocationId">
+                  <option value="">(optional)</option>
+                  <option *ngFor="let l of deliveryLocations" [value]="l._id">{{ l.name || l.address || l._id }}</option>
+                </select>
+              </div>
+
+              <div class="col-md-4" *ngIf="isEditMode">
+                <label class="form-label"><i class="bi bi-flag"></i> Status</label>
+                <select class="form-select" [(ngModel)]="selectedOrder.status" name="status">
+                  <option value="Pending">Pending</option>
+                  <option value="Confirmed">Confirmed</option>
+                  <option value="Dispatched">Dispatched</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div class="col-md-4" *ngIf="isEditMode">
+                <label class="form-label"><i class="bi bi-geo"></i> Address</label>
+                <select class="form-select" [(ngModel)]="selectedOrder.userAddressId" name="editUserAddressId">
+                  <option value="">(keep current)</option>
+                  <option *ngFor="let a of userAddresses" [value]="a._id">{{ formatAddress(a) || a._id }}</option>
+                </select>
+              </div>
+              <div class="col-md-4" *ngIf="isEditMode">
+                <label class="form-label"><i class="bi bi-geo-alt"></i> Delivery Location</label>
+                <select class="form-select" [(ngModel)]="selectedOrder.deliveryLocationId" name="editDeliveryLocationId">
+                  <option value="">(keep current)</option>
+                  <option *ngFor="let l of deliveryLocations" [value]="l._id">{{ l.name || l.address || l._id }}</option>
+                </select>
               </div>
             </div>
-            <div class="mb-3">
-              <label for="status" class="form-label"><i class="bi bi-flag"></i> Status</label>
-              <select class="form-select" id="status" [(ngModel)]="selectedOrder.status" name="status">
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="shipped">Shipped</option>
-                <option value="delivered">Delivered</option>
-              </select>
+
+            <div *ngIf="isEditMode" class="mt-3">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="fw-semibold"><i class="bi bi-bag"></i> Edit Items</div>
+                <div class="small text-muted">Stock is checked against current inventory on save.</div>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table table-sm table-striped align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th class="text-nowrap">Stock</th>
+                      <th class="text-nowrap">Qty</th>
+                      <th class="text-nowrap">Max</th>
+                      <th class="text-nowrap">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let row of editableItems">
+                      <td class="fw-semibold">
+                        {{ productNameForItem({ productId: row.productId }) }}
+                        <span *ngIf="row.isNew" class="badge bg-info ms-2">new</span>
+                        <span *ngIf="row.remove" class="badge bg-danger ms-2">remove</span>
+                      </td>
+                      <td><span class="badge bg-light text-dark">{{ productStock(row.productId) ?? '—' }}</span></td>
+                      <td style="max-width: 120px">
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          [(ngModel)]="row.quantity"
+                          [name]="'qty_' + row.productId"
+                          min="1"
+                          [max]="maxAllowedQty(row.productId) || null"
+                          [disabled]="row.remove === true"
+                        >
+                      </td>
+                      <td><span class="badge bg-light text-dark">{{ maxAllowedQty(row.productId) ?? '—' }}</span></td>
+                      <td class="text-nowrap">
+                        <button type="button" class="btn btn-sm" [ngClass]="row.remove ? 'btn-outline-secondary' : 'btn-outline-danger'" (click)="toggleRemove(row)">
+                          <i class="bi" [ngClass]="row.remove ? 'bi-arrow-counterclockwise' : 'bi-trash'"></i>
+                          {{ row.remove ? 'Undo' : 'Remove' }}
+                        </button>
+                      </td>
+                    </tr>
+                    <tr *ngIf="editableItems.length === 0">
+                      <td colspan="5" class="text-center text-muted py-3">No items</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="row g-2 align-items-end mt-2">
+                <div class="col-12 col-md-8">
+                  <label class="form-label mb-1">Add product</label>
+                  <select class="form-select form-select-sm" [(ngModel)]="addProductId" name="addProductId">
+                    <option value="">Select product</option>
+                    <option *ngFor="let p of productsForSelectedOrderStore()" [value]="p._id">{{ p.name }}</option>
+                  </select>
+                </div>
+                <div class="col-6 col-md-2">
+                  <label class="form-label mb-1">Qty</label>
+                  <input type="number" class="form-control form-control-sm" [(ngModel)]="addQuantity" name="addQuantity" min="1" [max]="productStock(addProductId) || null">
+                </div>
+                <div class="col-6 col-md-2 d-grid">
+                  <button type="button" class="btn btn-sm btn-outline-primary" (click)="addItemToEditor()">
+                    <i class="bi bi-plus"></i> Add
+                  </button>
+                </div>
+              </div>
             </div>
           </form>
         </div>
@@ -72,7 +272,7 @@
             <i class="bi bi-x-circle"></i> Close
           </button>
           <button type="button" class="btn btn-primary" (click)="saveOrder()">
-            <i class="bi bi-check-circle"></i> Update
+            <i class="bi bi-check-circle"></i> {{ isEditMode ? 'Update' : 'Create' }}
           </button>
         </div>
       </div>

@@ -13,6 +13,11 @@ import { ApiService } from '../services/api.service';
 export class ProductsComponent implements OnInit {
   products: any[] = [];
   categories: any[] = [];
+  subcategories: any[] = [];
+  stores: any[] = [];
+  private storeById = new Map<string, any>();
+
+  storeFilterId = '';
   selectedProduct: any = {};
   selectedImageFile: File | null = null;
   isEditMode = false;
@@ -37,15 +42,19 @@ export class ProductsComponent implements OnInit {
 
   ngOnInit(): void {
     console.log('ProductsComponent ngOnInit');
+    this.loadStores();
     this.loadProducts();
-    this.loadCategories();
   }
 
   loadProducts(): void {
     console.log('Loading products');
-    this.apiService.getProducts().subscribe({
+    const req = this.storeFilterId?.trim()
+      ? this.apiService.getProductsByStore(this.storeFilterId.trim())
+      : this.apiService.getProducts();
+
+    req.subscribe({
       next: (data) => {
-        this.products = data;
+        this.products = Array.isArray(data) ? data : [];
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -54,28 +63,102 @@ export class ProductsComponent implements OnInit {
     });
   }
 
-  loadCategories(): void {
-    this.apiService.getCategories().subscribe({
+  loadStores(): void {
+    this.apiService.getStores().subscribe({
       next: (data) => {
-        this.categories = data;
+        this.stores = Array.isArray(data) ? data : [];
+        this.storeById = new Map(this.stores.map((s) => [String(s?._id), s]));
         this.cdr.markForCheck();
       },
       error: (err) => {
-        console.error('Error loading categories', err);
+        console.error('Error loading stores', err);
       }
     });
   }
 
+  loadCategoriesByStore(storeId: string): void {
+    const id = String(storeId || '').trim();
+    if (!id) {
+      this.categories = [];
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.apiService.getCategoriesByStore(id).subscribe({
+      next: (data) => {
+        this.categories = Array.isArray(data) ? data : [];
+        this.cdr.markForCheck();
+      },
+      error: (err) => console.error('Error loading categories', err),
+    });
+  }
+
+  loadSubcategoriesByStore(storeId: string): void {
+    const id = String(storeId || '').trim();
+    if (!id) {
+      this.subcategories = [];
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.apiService.getSubcategoriesByStore(id).subscribe({
+      next: (data) => {
+        this.subcategories = Array.isArray(data) ? data : [];
+        this.cdr.markForCheck();
+      },
+      error: (err) => console.error('Error loading subcategories', err),
+    });
+  }
+
+  onStoreFilterChange(storeId: string): void {
+    this.storeFilterId = String(storeId || '').trim();
+    this.loadProducts();
+  }
+
   openAddModal(): void {
-    this.selectedProduct = { quantity: 0, categoryId: '', isActive: true };
+    this.selectedProduct = {
+      storeId: this.storeFilterId?.trim() || '',
+      categoryId: '',
+      subcategoryId: '',
+      quantity: 0,
+      isActive: true,
+    };
     this.selectedImageFile = null;
     this.isEditMode = false;
+
+    if (this.selectedProduct.storeId) {
+      this.loadCategoriesByStore(this.selectedProduct.storeId);
+      this.loadSubcategoriesByStore(this.selectedProduct.storeId);
+    } else {
+      this.categories = [];
+      this.subcategories = [];
+    }
   }
 
   editProduct(product: any): void {
-    this.selectedProduct = { ...product };
+    const storeId = String(product?.storeId || '').trim();
+    this.selectedProduct = { ...product, storeId, categoryId: String(product?.categoryId || '').trim(), subcategoryId: String(product?.subcategoryId || '').trim() };
     this.selectedImageFile = null;
     this.isEditMode = true;
+
+    if (storeId) {
+      this.loadCategoriesByStore(storeId);
+      this.loadSubcategoriesByStore(storeId);
+    }
+  }
+
+  onModalStoreChange(storeId: string): void {
+    const id = String(storeId || '').trim();
+    this.selectedProduct.storeId = id;
+    this.selectedProduct.categoryId = '';
+    this.selectedProduct.subcategoryId = '';
+    this.loadCategoriesByStore(id);
+    this.loadSubcategoriesByStore(id);
+  }
+
+  onModalCategoryChange(categoryId: string): void {
+    this.selectedProduct.categoryId = String(categoryId || '').trim();
+    this.selectedProduct.subcategoryId = '';
   }
 
   onImageSelected(event: Event): void {
@@ -85,8 +168,24 @@ export class ProductsComponent implements OnInit {
   }
 
   saveProduct(): void {
+    const payload: any = {
+      ...this.selectedProduct,
+      storeId: String(this.selectedProduct.storeId || '').trim(),
+      categoryId: String(this.selectedProduct.categoryId || '').trim(),
+      subcategoryId: this.selectedProduct.subcategoryId ? String(this.selectedProduct.subcategoryId).trim() : undefined,
+      quantity: Number(this.selectedProduct.quantity || 0),
+      price: Number(this.selectedProduct.price || 0),
+      name: String(this.selectedProduct.name || '').trim(),
+      description: this.selectedProduct.description ? String(this.selectedProduct.description).trim() : undefined,
+    };
+
+    if (!payload.storeId || !payload.categoryId || !payload.name) {
+      this.showToastMessage('Store, Category and Name are required', 'error');
+      return;
+    }
+
     if (this.isEditMode) {
-      this.apiService.updateProduct(this.selectedProduct._id, this.selectedProduct).subscribe({
+      this.apiService.updateProduct(this.selectedProduct._id, payload).subscribe({
         next: (updated) => {
           if (this.selectedImageFile) {
             this.apiService.uploadProductImage(updated?._id || this.selectedProduct._id, this.selectedImageFile, true).subscribe({
@@ -109,7 +208,7 @@ export class ProductsComponent implements OnInit {
         }
       });
     } else {
-      this.apiService.createProduct(this.selectedProduct).subscribe({
+      this.apiService.createProduct(payload).subscribe({
         next: (created) => {
           const createdId = created?._id;
           if (createdId && this.selectedImageFile) {
@@ -170,5 +269,23 @@ export class ProductsComponent implements OnInit {
     if (this.modal) {
       (window as any).bootstrap.Modal.getInstance(this.modal.nativeElement)?.hide();
     }
+  }
+
+  storeName(id: string): string {
+    const sid = String(id || '').trim();
+    return this.storeById.get(sid)?.name || sid;
+  }
+
+  visibleSubcategoriesForModal(): any[] {
+    const storeId = String(this.selectedProduct?.storeId || '').trim();
+    const categoryId = String(this.selectedProduct?.categoryId || '').trim();
+    if (!storeId) return [];
+
+    const scoped = this.subcategories.filter((s) => {
+      const catId = typeof s?.categoryId === 'object' ? String(s?.categoryId?._id || '') : String(s?.categoryId || '');
+      return !categoryId ? true : catId === categoryId;
+    });
+
+    return scoped;
   }
 }

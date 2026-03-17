@@ -16,6 +16,8 @@
   top: 0;
   height: 100vh;
   overflow: auto;
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
+  box-shadow: 0 14px 40px rgba(2, 6, 23, 0.35);
 }
 
 .app-brand {
@@ -26,14 +28,14 @@
 }
 
 .brand-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  background: rgba(59, 130, 246, 0.18);
-  color: #93c5fd;
-  font-size: 20px;
+  width: 85px;
+  height: 50px;
+  border-radius: 14px;
+  background-color: rgba(59, 130, 246, 0.15);
+  background-image: url('/logo.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
 }
 
 .brand-title {
@@ -61,6 +63,7 @@
   border-radius: 12px;
   color: rgba(226, 232, 240, 0.9);
   transition: background 120ms ease, color 120ms ease;
+  position: relative;
 }
 
 .app-nav-link i {
@@ -80,10 +83,24 @@
   color: #fff;
 }
 
+.app-nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 999px;
+  background: #60a5fa;
+}
+
 .app-main {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  background: radial-gradient(1000px 800px at 20% 0%, rgba(59, 130, 246, 0.10), transparent 55%),
+    radial-gradient(900px 700px at 90% 10%, rgba(16, 185, 129, 0.08), transparent 60%),
+    #f8fafc;
 }
 
 .app-topbar {

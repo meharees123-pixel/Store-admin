@@ -12,7 +12,6 @@ import { ApiService } from '../services/api.service';
 })
 export class UserAddressesComponent implements OnInit {
       users: any[] = [];
-    deliveryLocations: any[] = [];
   addresses: any[] = [];
   selectedAddress: any = {};
   isEditMode = false;
@@ -35,7 +34,6 @@ export class UserAddressesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAddresses();
-    this.loadDeliveryLocations();
     this.loadUsers();
   }
 
@@ -71,23 +69,6 @@ export class UserAddressesComponent implements OnInit {
         this.showToastMessage('Error loading user addresses', 'error');
       }
     });
-  }
-
-  loadDeliveryLocations(): void {
-    this.apiService.getDeliveryLocations().subscribe({
-      next: (data) => {
-        this.deliveryLocations = data;
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        this.showToastMessage('Error loading delivery locations', 'error');
-      }
-    });
-  }
-
-  getDeliveryLocationName(id: string): string {
-    const location = this.deliveryLocations.find((loc: any) => loc._id === id);
-    return location ? location.name : id;
   }
 
   openAddModal(): void {
