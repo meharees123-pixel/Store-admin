@@ -1,5 +1,5 @@
 <div class="app-shell">
-  <aside class="app-sidebar">
+  <aside class="app-sidebar" [class.open]="isSidebarOpen">
       <div class="app-brand">
         <div class="brand-icon" aria-label="Store Admin logo"></div>
         <div class="brand-text">
@@ -9,7 +9,7 @@
       </div>
 
       <nav class="app-nav">
-      <a [routerLink]="['/dashboard']" routerLinkActive="active" class="app-nav-link">
+      <a [routerLink]="['/dashboard']" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="app-nav-link">
         <i class="bi bi-speedometer2"></i><span>Dashboard</span>
       </a>
       <a [routerLink]="['./products']" routerLinkActive="active" class="app-nav-link">
@@ -42,11 +42,15 @@
       <a [routerLink]="['./app-settings']" routerLinkActive="active" class="app-nav-link">
         <i class="bi bi-sliders"></i><span>App Settings</span>
       </a>
-    </nav>
+      </nav>
   </aside>
+  <div class="mobile-overlay" *ngIf="isSidebarOpen" (click)="closeSidebar()"></div>
 
   <section class="app-main">
     <nav class="app-topbar">
+      <button class="btn btn-outline-secondary btn-sm d-lg-none me-3" (click)="toggleSidebar()" aria-label="Toggle menu">
+        <i class="bi bi-list"></i>
+      </button>
       <div class="topbar-title">
         <img
           src="/logo.png"

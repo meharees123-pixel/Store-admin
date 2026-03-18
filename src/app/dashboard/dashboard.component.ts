@@ -10,10 +10,20 @@ import { AuthService } from '../services/auth.service';
   styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent {
+  isSidebarOpen = false;
+
   constructor(private auth: AuthService, private router: Router) {}
 
   get phone(): string | null {
     return this.auth.getPhone();
+  }
+
+  toggleSidebar(): void {
+    this.isSidebarOpen = !this.isSidebarOpen;
+  }
+
+  closeSidebar(): void {
+    this.isSidebarOpen = false;
   }
 
   logout(): void {

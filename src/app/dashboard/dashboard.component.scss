@@ -103,6 +103,13 @@
     #f8fafc;
 }
 
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 150;
+}
+
 .app-topbar {
   height: 58px;
   display: flex;
@@ -135,7 +142,18 @@
     grid-template-columns: 1fr;
   }
   .app-sidebar {
-    position: relative;
-    height: auto;
+    position: fixed;
+    left: -280px;
+    width: 260px;
+    height: 100vh;
+    z-index: 190;
+    border-right: none;
+    transition: left 0.25s ease;
+  }
+  .app-sidebar.open {
+    left: 0;
+  }
+  .app-main {
+    margin-left: 0;
   }
 }
