@@ -2,7 +2,17 @@ import { Component, OnInit, ChangeDetectorRef, ViewChild, ElementRef } from '@an
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbToastModule } from '@ng-bootstrap/ng-bootstrap';
+import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../services/api.service';
+import {
+  BulkTemplate,
+  buildTemplateWorkbook,
+  getRowValue,
+  normalizeBulkCode,
+  parseBulkBoolean,
+  readExcelFile,
+  triggerDownload,
+} from '../services/bulk-upload.utils';
 
 @Component({
   selector: 'app-categories',
@@ -13,6 +23,11 @@ import { ApiService } from '../services/api.service';
 export class CategoriesComponent implements OnInit {
   categories: any[] = [];
   stores: any[] = [];
+  storeFilterId = '';
+  selectedBulkStoreId = '';
+  bulkFile: File | null = null;
+  isBulkUploading = false;
+  bulkUploadErrors: string[] = [];
   selectedCategory: any = {};
   selectedImageFile: File | null = null;
   isEditMode = false;
@@ -56,7 +71,10 @@ export class CategoriesComponent implements OnInit {
   }
 
   loadCategories(): void {
-    this.apiService.getCategories().subscribe({
+    const request = this.storeFilterId?.trim()
+      ? this.apiService.getCategoriesByStore(this.storeFilterId.trim())
+      : this.apiService.getCategories();
+    request.subscribe({
       next: (data) => {
         this.categories = data;
         this.cdr.markForCheck();
@@ -71,6 +89,14 @@ export class CategoriesComponent implements OnInit {
     this.selectedCategory = { isActive: true, storeId: '' };
     this.selectedImageFile = null;
     this.isEditMode = false;
+  }
+
+  onStoreFilterChange(storeId: string): void {
+    this.storeFilterId = String(storeId || '').trim();
+    if (this.storeFilterId) {
+      this.selectedBulkStoreId = this.storeFilterId;
+    }
+    this.loadCategories();
   }
 
   editCategory(category: any): void {
@@ -168,5 +194,86 @@ export class CategoriesComponent implements OnInit {
     this.selectedImageFile = null;
     this.isEditMode = false;
     // Optionally hide modal if needed
+  }
+
+  downloadSampleTemplate(): void {
+    if (!this.selectedBulkStoreId) {
+      this.showToastMessage('Select a store before downloading a template.', 'error');
+      return;
+    }
+
+    const template: BulkTemplate = {
+      headers: ['Name', 'Category Code', 'Description', 'Active'],
+      row: ['Fresh Produce', 'FRESH', 'Fresh fruits and veggies', 'true'],
+    };
+    const buffer = buildTemplateWorkbook(template);
+    triggerDownload('category-template.xlsx', buffer);
+  }
+
+  onBulkFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.bulkFile = input.files?.[0] || null;
+  }
+
+  async handleBulkUpload(): Promise<void> {
+    if (!this.selectedBulkStoreId) {
+      this.showToastMessage('Select a store before uploading.', 'error');
+      return;
+    }
+    if (!this.bulkFile) {
+      this.showToastMessage('Please choose an Excel file first.', 'error');
+      return;
+    }
+    this.isBulkUploading = true;
+    this.bulkUploadErrors = [];
+    try {
+      const rows = await readExcelFile(this.bulkFile);
+      if (!rows.length) {
+        throw new Error('The file does not contain any rows.');
+      }
+      const result = await this.processBulkRows(rows);
+      if (result.errors.length) {
+        this.bulkUploadErrors = result.errors;
+        this.showToastMessage(`Uploaded ${result.success} rows; ${result.errors.length} rows failed.`, 'error');
+      } else {
+        this.showToastMessage(`Uploaded ${result.success} rows successfully.`, 'success');
+      }
+      this.bulkFile = null;
+    } catch (err: any) {
+      this.showToastMessage(`Bulk upload failed: ${err?.message || 'Unknown error'}`, 'error');
+    } finally {
+      this.isBulkUploading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  private async processBulkRows(rows: any[]): Promise<{ success: number; errors: string[] }> {
+    const summary = { success: 0, errors: [] as string[] };
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowNumber = i + 2;
+      try {
+        await this.uploadCategoryRow(row);
+        summary.success += 1;
+      } catch (error: any) {
+        summary.errors.push(`Row ${rowNumber}: ${error?.message || 'Failed to import row'}`);
+      }
+    }
+    return summary;
+  }
+
+  private async uploadCategoryRow(row: any): Promise<void> {
+    const name = getRowValue(row, ['Name', 'Category Name']);
+    const code = getRowValue(row, ['Category Code', 'Code']);
+    if (!name) throw new Error('Missing Name');
+    if (!code) throw new Error('Missing Category Code');
+    const payload = {
+      name,
+      categoryCode: code,
+      description: getRowValue(row, ['Description']),
+      storeId: this.selectedBulkStoreId,
+      isActive: parseBulkBoolean(row, ['Active', 'Is Active'], true),
+    };
+    await firstValueFrom(this.apiService.createCategory(payload));
   }
 }

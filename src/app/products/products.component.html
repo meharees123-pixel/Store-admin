@@ -12,6 +12,47 @@
     </div>
   </div>
 
+  <div class="card shadow-sm mb-4 bulk-upload-card">
+    <div class="card-body">
+      <h5 class="card-title">Bulk upload</h5>
+      <p class="text-muted mb-3">Pick a store, upload a product Excel sheet, and let us insert the rows.</p>
+      <div class="bulk-upload-grid">
+        <div class="bulk-control">
+          <label class="form-label mb-1">Store</label>
+          <select class="form-select" [(ngModel)]="selectedBulkStoreId" (ngModelChange)="onBulkStoreChange($event)">
+            <option value="">Select store</option>
+            <option *ngFor="let s of stores" [value]="s._id">{{ s.name }}</option>
+          </select>
+        </div>
+        <div class="bulk-control">
+          <label class="form-label mb-1">Excel file</label>
+          <input type="file" class="form-control" accept=".xlsx,.xls" (change)="onBulkFileSelected($event)">
+          <div class="form-text" *ngIf="bulkFile">{{ bulkFile.name }}</div>
+        </div>
+        <div class="bulk-actions d-flex align-items-end gap-2">
+          <button type="button" class="btn btn-outline-secondary" (click)="downloadSampleTemplate()">
+            <i class="bi bi-download"></i> Download sample
+          </button>
+          <button type="button" class="btn btn-primary" [disabled]="isBulkUploading" (click)="handleBulkUpload()">
+            <i class="bi bi-cloud-upload"></i>
+            <span *ngIf="!isBulkUploading">Upload</span>
+            <span *ngIf="isBulkUploading">
+              Uploading...
+              <span class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></span>
+            </span>
+          </button>
+        </div>
+      </div>
+      <div *ngIf="bulkUploadErrors.length" class="alert alert-danger mt-3 mb-0">
+        <strong>Errors:</strong>
+        <ul class="mb-0">
+          <li *ngFor="let err of bulkUploadErrors.slice(0, 5)">{{ err }}</li>
+          <li *ngIf="bulkUploadErrors.length > 5">...and {{ bulkUploadErrors.length - 5 }} more</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <div class="card shadow-sm">
     <div class="card-body">
       <div class="table-responsive">

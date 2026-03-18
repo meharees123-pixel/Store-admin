@@ -1,7 +1,18 @@
 import { Component, ChangeDetectorRef, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../services/api.service';
+import {
+  BulkTemplate,
+  buildTemplateWorkbook,
+  getRowValue,
+  normalizeBulkCode,
+  parseBulkBoolean,
+  readExcelFile,
+  triggerDownload,
+} from '../services/bulk-upload.utils';
+import { ToastService } from '../services/toast.service';
 
 @Component({
   selector: 'app-subcategories',
@@ -15,14 +26,20 @@ export class SubcategoriesComponent implements OnInit {
   stores: any[] = [];
   private storeById = new Map<string, any>();
   selectedStoreId = '';
+  selectedBulkStoreId = '';
+  private categoryCodeMap = new Map<string, any>();
   selectedSubcategory: any = {};
   selectedImageFile: File | null = null;
   isEditMode = false;
+  bulkFile: File | null = null;
+  isBulkUploading = false;
+  bulkUploadErrors: string[] = [];
 
   constructor(
     private apiService: ApiService,
     private ngZone: NgZone,
     private cdr: ChangeDetectorRef,
+    private toastService: ToastService,
   ) {}
 
   ngOnInit(): void {
@@ -56,6 +73,7 @@ export class SubcategoriesComponent implements OnInit {
     this.apiService.getCategoriesByStore(this.selectedStoreId).subscribe({
       next: (data) => {
         this.categories = Array.isArray(data) ? data : [];
+        this.buildCategoryCodeMap();
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -78,9 +96,19 @@ export class SubcategoriesComponent implements OnInit {
   }
 
   onStoreFilterChange(storeId: string): void {
-    this.selectedStoreId = this.toId(storeId);
+    const normalized = this.toId(storeId);
+    this.selectedStoreId = normalized;
+    if (!this.selectedBulkStoreId) {
+      this.selectedBulkStoreId = normalized;
+    }
     this.loadCategories();
     this.loadSubcategories();
+  }
+
+  onBulkStoreChange(storeId: string): void {
+    const normalized = this.toId(storeId);
+    this.selectedBulkStoreId = normalized;
+    this.onStoreFilterChange(normalized);
   }
 
   openAddModal(): void {
@@ -281,6 +309,113 @@ export class SubcategoriesComponent implements OnInit {
     if (!id) return '';
     const category = this.categories.find((c) => this.toId(c?._id) === id);
     return this.toId(category?.storeId);
+  }
+
+  private buildCategoryCodeMap(): void {
+    this.categoryCodeMap.clear();
+    for (const category of this.categories) {
+      const code = normalizeBulkCode(category?.categoryCode);
+      if (!code) continue;
+      this.categoryCodeMap.set(code, category);
+    }
+  }
+
+  onBulkFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.bulkFile = input.files?.[0] || null;
+  }
+
+  async handleBulkUpload(): Promise<void> {
+    const targetStoreId = this.selectedBulkStoreId || this.selectedStoreId;
+    if (!targetStoreId) {
+      this.showToastMessage('Select a store before uploading.', 'error');
+      return;
+    }
+    if (!this.bulkFile) {
+      this.showToastMessage('Please choose an Excel file.', 'error');
+      return;
+    }
+    this.isBulkUploading = true;
+    this.bulkUploadErrors = [];
+    try {
+      const rows = await readExcelFile(this.bulkFile);
+      if (!rows.length) throw new Error('The file has no rows.');
+      const result = await this.processBulkRows(rows, targetStoreId);
+      if (result.errors.length) {
+        this.bulkUploadErrors = result.errors;
+      }
+      this.showToastMessage(`Imported ${result.success} rows (${result.errors.length} errors).`, result.errors.length ? 'error' : 'success');
+      this.loadSubcategories();
+      this.bulkFile = null;
+    } catch (error: any) {
+      this.showToastMessage(`Bulk upload failed: ${error?.message || 'Unknown error'}`, 'error');
+    } finally {
+      this.isBulkUploading = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  private async processBulkRows(rows: any[], storeId: string): Promise<{ success: number; errors: string[] }> {
+    const summary = { success: 0, errors: [] as string[] };
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowNumber = i + 2;
+      try {
+        await this.uploadSubcategoryRow(row, storeId);
+        summary.success += 1;
+      } catch (err: any) {
+        summary.errors.push(`Row ${rowNumber}: ${err?.message || 'Unable to import'}`);
+      }
+    }
+    return summary;
+  }
+
+  private async uploadSubcategoryRow(row: any, storeId: string): Promise<void> {
+    const name = getRowValue(row, ['Name', 'Subcategory Name']);
+    const code = getRowValue(row, ['Subcategory Code', 'Code']);
+    const categoryCode = getRowValue(row, ['Category Code', 'Category']);
+    if (!name) throw new Error('Missing name');
+    if (!code) throw new Error('Missing subcategory code');
+    if (!categoryCode) throw new Error('Missing category code');
+    const category = this.findCategoryByCode(categoryCode, storeId);
+    if (!category) throw new Error(`Category ${categoryCode} not found`);
+    const payload = {
+      name,
+      subcategoryCode: code,
+      description: getRowValue(row, ['Description']),
+      categoryId: category._id,
+      storeId: category.storeId || storeId,
+      isActive: parseBulkBoolean(row, ['Active', 'Is Active'], true),
+    };
+    await firstValueFrom(this.apiService.createSubcategory(payload));
+  }
+
+  downloadSampleTemplate(): void {
+    const targetStoreId = this.selectedBulkStoreId || this.selectedStoreId;
+    if (!targetStoreId) {
+      this.showToastMessage('Select a store before downloading a template.', 'error');
+      return;
+    }
+
+    const template: BulkTemplate = {
+      headers: ['Name', 'Subcategory Code', 'Category Code', 'Description', 'Active'],
+      row: ['Citrus', 'CITRUS', 'FRUITS', 'Citrus fruits and juices', 'true'],
+    };
+    const buffer = buildTemplateWorkbook(template);
+    triggerDownload('subcategory-template.xlsx', buffer);
+  }
+
+  private findCategoryByCode(code: string, storeId: string): any | undefined {
+    if (!storeId) return undefined;
+    return this.categoryCodeMap.get(normalizeBulkCode(code));
+  }
+
+  private showToastMessage(message: string, type: 'success' | 'error' = 'success'): void {
+    if (type === 'error') {
+      this.toastService.error(message);
+      return;
+    }
+    this.toastService.success(message);
   }
 
   visibleCategoriesForModal(): any[] {

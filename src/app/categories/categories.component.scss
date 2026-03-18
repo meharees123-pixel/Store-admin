@@ -1,0 +1,19 @@
+.bulk-upload-card {
+  border-radius: 1rem;
+}
+
+.bulk-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.bulk-control input,
+.bulk-control select {
+  min-height: 46px;
+}
+
+.bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+}

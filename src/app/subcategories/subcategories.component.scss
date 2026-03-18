@@ -5,3 +5,27 @@
 .subcat-actions {
   white-space: nowrap;
 }
+
+.bulk-upload-card {
+  border-radius: 1rem;
+}
+
+.bulk-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.bulk-control input {
+  min-height: 46px;
+}
+
+.bulk-control select {
+  min-height: 46px;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
