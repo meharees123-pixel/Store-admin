@@ -41,10 +41,11 @@ export class DashboardSummaryComponent implements OnInit {
   errorMessage = '';
   readonly summaryMonths = 6;
   readonly topLimit = 5;
-  stores: { _id: string; name?: string | null }[] | null = null;
+  stores: { _id: string; name?: string | null }[] = [];
   selectedStoreId = '';
   chartReady = false;
   isReportLoading = false;
+  isStoreLoading = true;
   chartOptions: MonthlySalesChartOptions = {
     series: [{ name: 'Sales', data: [] }],
     chart: {
@@ -110,6 +111,7 @@ export class DashboardSummaryComponent implements OnInit {
     this.errorMessage = '';
     this.chartReady = false;
     this.isReportLoading = true;
+
     this.api
       .getDashboardReport({
         months: this.summaryMonths,
@@ -118,21 +120,26 @@ export class DashboardSummaryComponent implements OnInit {
       })
       .pipe(
         finalize(() => {
-          this.isReportLoading = false;
-          this.cdr.markForCheck();
+          this.queueState(() => {
+            this.isReportLoading = false;
+          });
         }),
       )
       .subscribe({
         next: (data) => {
-          this.report = data;
-          this.updateChart();
-          this.cdr.markForCheck();
+          this.queueState(() => {
+            this.report = data;
+            this.errorMessage = '';
+            this.chartReady = this.updateChartOptions(data);
+          });
         },
         error: (err) => {
           const msg = err?.error?.message;
-          this.errorMessage = msg ? String(msg) : 'Failed to load dashboard metrics.';
-          this.chartReady = false;
-          this.cdr.markForCheck();
+          this.queueState(() => {
+            this.report = null;
+            this.errorMessage = msg ? String(msg) : 'Failed to load dashboard metrics.';
+            this.chartReady = false;
+          });
         },
       });
   }
@@ -142,12 +149,25 @@ export class DashboardSummaryComponent implements OnInit {
     this.loadReport();
   }
 
+  private queueState(update: () => void): void {
+    Promise.resolve().then(() => {
+      update();
+      this.cdr.markForCheck();
+    });
+  }
+
   private loadStores(): void {
     this.api.getStores().subscribe({
       next: (stores) => {
-        setTimeout(() => {
+        this.queueState(() => {
           this.stores = stores ?? [];
-          this.cdr.markForCheck();
+          this.isStoreLoading = false;
+        });
+      },
+      error: () => {
+        this.queueState(() => {
+          this.stores = [];
+          this.isStoreLoading = false;
         });
       },
     });
@@ -158,14 +178,22 @@ export class DashboardSummaryComponent implements OnInit {
     return new Date(year, month - 1).toLocaleString('en-US', { month: 'short' });
   }
 
-  private updateChart(): void {
-    if (!this.report || !this.report.monthlySales.length) {
-      this.chartReady = false;
-      return;
+  private updateChartOptions(report: DashboardReport | null): boolean {
+    const monthlySales = report?.monthlySales ?? [];
+    if (!monthlySales.length) {
+      this.chartOptions = {
+        ...this.chartOptions,
+        series: [{ name: 'Sales', data: [] }],
+        xaxis: {
+          ...this.chartOptions.xaxis,
+          categories: [],
+        },
+      };
+      return false;
     }
 
-    const labels = this.report.monthlySales.map((month) => this.monthLabel(month.year, month.month));
-    const totals = this.report.monthlySales.map((month) => month.totalSales);
+    const labels = monthlySales.map((month) => this.monthLabel(month.year, month.month));
+    const totals = monthlySales.map((month) => month.totalSales);
 
     this.chartOptions = {
       ...this.chartOptions,
@@ -181,7 +209,7 @@ export class DashboardSummaryComponent implements OnInit {
         },
       },
     };
-    this.chartReady = true;
+    return true;
   }
 
 }

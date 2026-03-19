@@ -4,13 +4,13 @@ import { Observable } from 'rxjs';
 import { TOAST_ERROR_MESSAGE, TOAST_SUCCESS_MESSAGE } from './http-context.tokens';
 import { DashboardReport } from '../models/dashboard-report';
 import { SKIP_PAGE_LOADER } from './http-context.tokens';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://localhost:3000';
- // private baseUrl = 'http://34.56.150.67:3000';
+  private baseUrl = environment.baseUrl;
 
   constructor(private http: HttpClient) {}
 

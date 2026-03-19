@@ -157,6 +157,17 @@
   outline: none;
 }
 
+.store-select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.store-select-group select {
+  width: 100%;
+  max-width: 260px;
+}
+
 .report-list {
   list-style: none;
   margin: 0;

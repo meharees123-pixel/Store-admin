@@ -6,20 +6,23 @@
     </div>
     <div class="store-filter">
       <label for="store-filter">Store</label>
-      <select
-        id="store-filter"
-        (change)="onStoreChange($any($event.target).value)"
-        [value]="selectedStoreId"
-        [disabled]="!stores"
-      >
-        <option value="">All stores</option>
-        <option *ngIf="!stores" disabled>Loading stores…</option>
-        <ng-container *ngIf="stores">
-          <option *ngFor="let store of stores" [value]="store._id">
-            {{ store.name || store._id }}
-          </option>
-        </ng-container>
-      </select>
+      <div class="store-select-group">
+        <select
+          id="store-filter"
+          (change)="onStoreChange($any($event.target).value)"
+          [value]="selectedStoreId"
+          [disabled]="isStoreLoading"
+        >
+          <option value="">All stores</option>
+          <option *ngIf="isStoreLoading" disabled>Loading stores…</option>
+          <ng-container *ngIf="!isStoreLoading">
+            <option *ngFor="let store of stores" [value]="store._id">
+              {{ store.name || store._id }}
+            </option>
+          </ng-container>
+        </select>
+        <span class="muted small" *ngIf="!isStoreLoading && !stores.length">No stores available yet</span>
+      </div>
     </div>
   </header>
 
@@ -137,3 +140,7 @@
     </article>
   </div>
 </section>
+
+
+
+
