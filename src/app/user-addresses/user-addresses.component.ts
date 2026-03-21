@@ -11,7 +11,8 @@ import { ApiService } from '../services/api.service';
   styleUrls: ['./user-addresses.component.scss']
 })
 export class UserAddressesComponent implements OnInit {
-      users: any[] = [];
+  stores: any[] = [];
+  users: any[] = [];
   addresses: any[] = [];
   selectedAddress: any = {};
   isEditMode = false;
@@ -33,6 +34,7 @@ export class UserAddressesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadStores();
     this.loadAddresses();
     this.loadUsers();
   }
@@ -49,6 +51,18 @@ export class UserAddressesComponent implements OnInit {
     });
   }
 
+  loadStores(): void {
+    this.apiService.getStores().subscribe({
+      next: (data) => {
+        this.stores = data;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.showToastMessage('Error loading stores', 'error');
+      },
+    });
+  }
+
   getUserName(id: string): string {
     const user = this.users.find((u: any) => u._id === id);
     return user ? (user.name || user.mobileNumber || id) : id;
@@ -57,6 +71,12 @@ export class UserAddressesComponent implements OnInit {
   getUserLabel(user: any): string {
     if (!user) return '';
     return user.name || user.mobileNumber || user.email || user._id;
+  }
+
+  getStoreName(id?: string): string {
+    if (!id) return '—';
+    const store = this.stores.find((s) => s._id === id);
+    return store ? store.name || store._id : id;
   }
 
   loadAddresses(): void {

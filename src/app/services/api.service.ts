@@ -112,6 +112,23 @@ export class ApiService {
     );
   }
 
+  uploadCategoryIcon(id: string, file: File, replace = false): Observable<any> {
+    const form = new FormData();
+    form.append('icon', file);
+    const method = replace ? 'PUT' : 'POST';
+    return this.http.request(method, `${this.baseUrl}/categories/${id}/icon`, {
+      body: form,
+      ...this.toast('Category icon uploaded', 'Error uploading category icon'),
+    });
+  }
+
+  deleteCategoryIcon(id: string): Observable<any> {
+    return this.http.delete(
+      `${this.baseUrl}/categories/${id}/icon`,
+      this.toast('Category icon deleted', 'Error deleting category icon'),
+    );
+  }
+
   // Subcategories
   getSubcategories(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/subcategories`);

@@ -155,6 +155,7 @@ export class ProductsComponent implements OnInit {
       subcategoryId: '',
       quantity: 0,
       isActive: true,
+      mrp: undefined,
     };
     this.selectedImageFile = null;
     this.isEditMode = false;
@@ -170,7 +171,13 @@ export class ProductsComponent implements OnInit {
 
   editProduct(product: any): void {
     const storeId = String(product?.storeId || '').trim();
-    this.selectedProduct = { ...product, storeId, categoryId: String(product?.categoryId || '').trim(), subcategoryId: String(product?.subcategoryId || '').trim() };
+    this.selectedProduct = {
+      ...product,
+      storeId,
+      categoryId: String(product?.categoryId || '').trim(),
+      subcategoryId: String(product?.subcategoryId || '').trim(),
+      mrp: product?.mrp ?? undefined,
+    };
     this.selectedImageFile = null;
     this.isEditMode = true;
 
@@ -210,6 +217,7 @@ export class ProductsComponent implements OnInit {
       price: Number(this.selectedProduct.price || 0),
       name: String(this.selectedProduct.name || '').trim(),
       description: this.selectedProduct.description ? String(this.selectedProduct.description).trim() : undefined,
+      mrp: this.selectedProduct.mrp !== undefined && this.selectedProduct.mrp !== null ? Number(this.selectedProduct.mrp) : undefined,
     };
 
     if (!payload.storeId || !payload.categoryId || !payload.name) {
@@ -352,8 +360,8 @@ export class ProductsComponent implements OnInit {
     }
 
     const template: BulkTemplate = {
-      headers: ['Name', 'Category Code', 'Subcategory Code', 'Description', 'Price', 'Quantity', 'Active'],
-      row: ['Gold Apple', 'FRUITS', 'APPLE', 'Premium apples', 12.5, 100, 'true'],
+      headers: ['Name', 'Category Code', 'Subcategory Code', 'Description', 'Price', 'MRP', 'Quantity', 'Active'],
+      row: ['Gold Apple', 'FRUITS', 'APPLE', 'Premium apples', 12.5, 15.0, 100, 'true'],
     };
     const buffer = buildTemplateWorkbook(template);
     triggerDownload('product-template.xlsx', buffer);
@@ -413,6 +421,7 @@ export class ProductsComponent implements OnInit {
     const categoryCode = getRowValue(row, ['Category Code', 'Category']);
     const price = parseBulkNumber(row, ['Price', 'MRP']);
     const quantity = parseBulkNumber(row, ['Quantity', 'Stock']);
+    const mrp = parseBulkNumber(row, ['MRP']);
 
     if (!name) throw new Error('Missing Name');
     if (!categoryCode) throw new Error('Missing Category Code');
@@ -431,6 +440,10 @@ export class ProductsComponent implements OnInit {
       storeId: category.storeId || this.selectedBulkStoreId,
       isActive: parseBulkBoolean(row, ['Active', 'Is Active'], true),
     };
+
+    if (mrp !== null) {
+      payload.mrp = mrp;
+    }
 
     const subcategoryCode = getRowValue(row, ['Subcategory Code', 'Sub Category']);
     if (subcategoryCode) {

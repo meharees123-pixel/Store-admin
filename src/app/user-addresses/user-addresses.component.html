@@ -13,6 +13,7 @@
           <thead class="table-dark">
             <tr>
               <th><i class="bi bi-person"></i> User</th>
+              <th><i class="bi bi-shop"></i> Store</th>
               <th><i class="bi bi-geo-alt"></i> Street</th>
               <th><i class="bi bi-building"></i> City</th>
               <th><i class="bi bi-globe"></i> State</th>
@@ -22,9 +23,10 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let address of addresses">
-              <td>{{ getUserName(address.userId) }}</td>
-              <td>{{ address.street }}</td>
+              <tr *ngFor="let address of addresses">
+                <td>{{ getUserName(address.userId) }}</td>
+                <td>{{ getStoreName(address.storeId) }}</td>
+                <td>{{ address.street }}</td>
               <td>{{ address.city }}</td>
               <td>{{ address.state }}</td>
               <td>{{ address.country }}</td>
@@ -81,6 +83,13 @@
                 <label for="userId" class="form-label"><i class="bi bi-person"></i> User</label>
                 <select class="form-select" id="userId" [(ngModel)]="selectedAddress.userId" name="userId">
                   <option *ngFor="let user of users" [value]="user._id">{{ getUserLabel(user) }}</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="storeId" class="form-label"><i class="bi bi-shop"></i> Store</label>
+                <select class="form-select" id="storeId" [(ngModel)]="selectedAddress.storeId" name="storeId">
+                  <option [ngValue]="undefined">No store</option>
+                  <option *ngFor="let store of stores" [value]="store._id">{{ store.name || store._id }}</option>
                 </select>
               </div>
               <div class="col-md-6 mb-3">

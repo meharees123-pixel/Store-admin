@@ -63,6 +63,7 @@
               <th>Name</th>
               <th>Description</th>
               <th class="text-nowrap">Price</th>
+              <th class="text-nowrap">MRP</th>
               <th class="text-nowrap">Image</th>
               <th class="text-nowrap">Actions</th>
             </tr>
@@ -73,6 +74,10 @@
               <td class="fw-semibold">{{ product.name }}</td>
               <td class="text-muted">{{ product.description || '—' }}</td>
               <td><span class="badge bg-success">${{ product.price }}</span></td>
+              <td>
+                <span *ngIf="product.mrp !== undefined && product.mrp !== null" class="text-muted">${{ product.mrp }}</span>
+                <span *ngIf="product.mrp === undefined || product.mrp === null" class="text-muted">—</span>
+              </td>
               <td>
                 <a *ngIf="product.productImage" class="img-thumb-link" [href]="product.productImage" target="_blank" rel="noopener">
                   <img class="img-thumb" [src]="product.productImage" alt="Product image" loading="lazy">
@@ -89,7 +94,7 @@
               </td>
             </tr>
             <tr *ngIf="products.length === 0">
-              <td colspan="6" class="text-center text-muted py-4">No products found</td>
+              <td colspan="7" class="text-center text-muted py-4">No products found</td>
             </tr>
           </tbody>
         </table>
@@ -122,6 +127,10 @@
               <div class="col-md-6 mb-3">
                 <label for="price" class="form-label">Price</label>
                 <input type="number" class="form-control" id="price" [(ngModel)]="selectedProduct.price" name="price" placeholder="0.00">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="mrp" class="form-label">MRP</label>
+                <input type="number" class="form-control" id="mrp" [(ngModel)]="selectedProduct.mrp" name="mrp" placeholder="0.00">
               </div>
               <div class="col-md-6 mb-3">
                 <label for="quantity" class="form-label">Quantity</label>

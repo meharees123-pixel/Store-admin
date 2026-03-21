@@ -111,6 +111,40 @@ export class CategoriesComponent implements OnInit {
     this.selectedImageFile = file;
   }
 
+  onIconSelected(category: any, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !category?._id) {
+      return;
+    }
+    const replace = !!category.categoryIconImage;
+    this.apiService.uploadCategoryIcon(category._id, file, replace).subscribe({
+      next: () => {
+        this.showToastMessage('Category icon uploaded successfully', 'success');
+        this.loadCategories();
+        input.value = '';
+      },
+      error: () => {
+        this.showToastMessage('Error uploading category icon', 'error');
+        input.value = '';
+      },
+    });
+  }
+
+  deleteCategoryIcon(id: string): void {
+    if (!id) return;
+    if (!confirm('Delete category icon?')) return;
+    this.apiService.deleteCategoryIcon(id).subscribe({
+      next: () => {
+        this.showToastMessage('Category icon deleted', 'success');
+        this.loadCategories();
+      },
+      error: () => {
+        this.showToastMessage('Error deleting category icon', 'error');
+      },
+    });
+  }
+
   saveCategory(): void {
     if (this.isEditMode) {
       this.apiService.updateCategory(this.selectedCategory._id, this.selectedCategory).subscribe({
@@ -267,7 +301,7 @@ export class CategoriesComponent implements OnInit {
     const code = getRowValue(row, ['Category Code', 'Code']);
     if (!name) throw new Error('Missing Name');
     if (!code) throw new Error('Missing Category Code');
-    const payload = {
+    const payload: any = {
       name,
       categoryCode: code,
       description: getRowValue(row, ['Description']),
